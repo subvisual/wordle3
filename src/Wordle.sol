@@ -24,7 +24,7 @@ contract Wordle {
         }
 
         if (bytes(target).length != bytes(guess).length) {
-            revert("Target and Guess aren ot the same size.");
+            revert("Target and Guess are not the same size.");
         }
 
         // uint memory targetSize = bytes(target).length;
