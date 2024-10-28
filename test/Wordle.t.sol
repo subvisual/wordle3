@@ -22,6 +22,12 @@ contract WordleTest is Test {
         vm.expectRevert("Non-ASCII word detected.");
         wordle.compareWords("hello", unicode"はいい");
 
+        vm.expectRevert("Non-ASCII word detected.");
+        wordle.compareWords("hello", unicode"hey!👋");
+
+        vm.expectRevert("Non-ASCII word detected.");
+        wordle.compareWords("hello", unicode"helló");
+
         // different sizes
         vm.expectRevert("Target and Guess are not the same size.");
         wordle.compareWords("hello ", "hellooo");
