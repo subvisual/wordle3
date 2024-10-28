@@ -10,10 +10,20 @@ contract WordleTest is Test {
         wordle = new Wordle();
     }
 
-    function test_compareWords() public {
-        bool fail = wordle.compareWords("hello", "world");
-        bool success = wordle.compareWords("hello", "hello");
+    function test_isASCII() public {
+        bool fail = wordle.isASCII(unicode"にっぽん");
+        bool success = wordle.isASCII("Hello");
         assertEq(fail, false);
         assertEq(success, true);
+    }
+
+    function test_compareWords() public {
+        // non-ascii words
+        vm.expectRevert("Non-ASCII word detected.");
+        wordle.compareWords("hello", unicode"はいい");
+
+        // different sizes
+        vm.expectRevert("Target and Guess are not the same size.");
+        wordle.compareWords("hello ", "hellooo");
     }
 }
