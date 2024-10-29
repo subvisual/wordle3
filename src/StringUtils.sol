@@ -2,6 +2,16 @@
 pragma solidity ^0.8.28;
 
 library StringUtils {
+    /* 
+    Struct used to store a character and its state
+    to be used as a hit map by the generateHitmap function
+    and functions that will manipulate the generated hitmap    
+    */
+    struct CharState {
+        string char;
+        uint256 state; // 0 = miss ; 1 = exists ; 2 = hit
+    }
+
     // certify that a string is ASCII
     function isASCII(string memory word) public pure returns (bool) {
         bytes memory wordBytes = bytes(word);
@@ -66,12 +76,6 @@ library StringUtils {
             }
         }
         return false;
-    }
-
-    // hitmap generation
-    struct CharState {
-        string char;
-        uint256 state; // 0 = miss ; 1 = exists ; 2 = hit
     }
 
     function generateHitmap(string memory target) internal pure returns (CharState[] memory) {
