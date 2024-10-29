@@ -3,11 +3,11 @@ pragma solidity ^0.8.28;
 import {Test} from "forge-std/Test.sol";
 import {StringUtils} from "../src/StringUtils.sol";
 
-contract WordleTest is Test {
+contract TestStringMethods is Test {
     using StringUtils for string;
 
     // test ascii/non-ascii checker
-    function test_isASCII() public {
+    function test_isASCII() public pure {
         // non-ascii words
         string memory asciiString = "Hello, world";
         string memory nonAsciiString = unicode"👋👋";
@@ -16,19 +16,19 @@ contract WordleTest is Test {
     }
 
     // test string method to convert string to lower case
-    function test_toLowerCase() public {
+    function test_toLowerCase() public pure {
         string memory fullCaps = "HELLO";
         assertEq(fullCaps.toLowerCase(), "hello");
 
         string memory someCaps = "HeLLo";
-        assertEq(fullCaps.toLowerCase(), "hello");
+        assertEq(someCaps.toLowerCase(), "hello");
 
         string memory upperAlphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
         assertEq(upperAlphabet.toLowerCase(), "abcdefghijklmnopqrstuvwxyz");
     }
 
     // test string comparator
-    function test_compareStrings() public {
+    function test_compareStrings() public pure {
         // accept non-ascii for the timebeing
         assertTrue(StringUtils.areEqual(unicode"👋", unicode"👋"));
         assertTrue(StringUtils.areEqual("HELLO", "hello"));
@@ -51,7 +51,7 @@ contract WordleTest is Test {
     }
 
     // test generate hitmap function
-    function test_generateHitmap() public {
+    function test_generateHitmap() public pure {
         StringUtils.CharState[] memory hitmap = StringUtils.generateHitmap("HI");
 
         // test length
@@ -63,5 +63,34 @@ contract WordleTest is Test {
 
         assertEq(hitmap[1].char, "i");
         assertEq(hitmap[1].state, 0);
+    }
+
+    // test update hitmap function
+    function test_updateHitmap() public {
+        StringUtils.CharState[] memory hitmap = StringUtils.generateHitmap("HI");
+        StringUtils.updateHitmap(hitmap, 0, 1);
+        assertEq(hitmap[0].state, 1);
+
+        StringUtils.updateHitmap(hitmap, 1, 2);
+        assertEq(hitmap[1].state, 2);
+
+        // test out maxed state
+        vm.expectRevert("Invalid state.");
+        StringUtils.updateHitmap(hitmap, 0, 3);
+
+        // test index out ouf bounds
+        vm.expectRevert("Index out of bounds");
+        StringUtils.updateHitmap(hitmap, 3, 2);
+    }
+
+    // test hitmap completion checker
+    function test_isHitmapComplete() public pure {
+        StringUtils.CharState[] memory hitmap = StringUtils.generateHitmap("HI");
+        assertFalse(StringUtils.isHitmapComplete(hitmap));
+
+        // test for completion
+        StringUtils.updateHitmap(hitmap, 0, 2);
+        StringUtils.updateHitmap(hitmap, 1, 2);
+        assertTrue(StringUtils.isHitmapComplete(hitmap));
     }
 }
