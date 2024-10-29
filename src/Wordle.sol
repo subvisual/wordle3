@@ -9,6 +9,7 @@ contract Wordle {
 
     // declare hidden word variable
     StructTypes.CharState[] private HIDDEN_WORD;
+    StructTypes.CharState[] private ALPHABET;
 
     // setup hidden word
     // todo: implement obfuscation. would keccak256 be a good approach?
@@ -29,5 +30,14 @@ contract Wordle {
     // todo: remove once tests are finishied
     function getHiddenWord() public view returns (StructTypes.CharState[] memory) {
         return HIDDEN_WORD;
+    }
+
+    function getAlhabet() public view returns (StructTypes.CharState[] memory) {
+        return ALPHABET;
+    }
+
+    // setup alphabet hitmap
+    function setupAlphabet() public {
+        ALPHABET = StringUtils.generateHitmap("abcdefghijklmnopqrstuvwxyz");
     }
 }
