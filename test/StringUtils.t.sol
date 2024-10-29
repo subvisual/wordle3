@@ -3,7 +3,7 @@ pragma solidity ^0.8.28;
 
 import {Test} from "forge-std/Test.sol";
 import {StringUtils} from "../src/StringUtils.sol";
-import "../src/Interfaces.sol";
+import {StructTypes} from "../src/Interfaces.sol";
 
 contract TestStringMethods is Test {
     using StringUtils for string;

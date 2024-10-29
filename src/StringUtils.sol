@@ -77,33 +77,6 @@ library StringUtils {
     }
 
     // function that updates the hitmap state for a given index
-    function updateHitmap(CharState[] memory hitmap, uint256 index, uint256 state)
-        internal
-        pure
-        returns (CharState[] memory)
-    {
-        if (index >= hitmap.length) {
-            revert("Index out of bounds");
-        }
-        if (state > 2) {
-            revert("Invalid state.");
-        }
-        if (hitmap[index].state < 2) {
-            hitmap[index].state = state;
-        }
-    }
-
-    // function that checks if the hitmap is complete
-    function isHitmapComplete(CharState[] memory hitmap) internal pure returns (bool) {
-        for (uint256 i = 0; i < hitmap.length; i++) {
-            if (hitmap[i].state == 0) {
-                return false;
-            }
-        }
-        return true;
-    }
-
-    // function that updates the hitmap state for a given index
     function updateHitmap(StructTypes.CharState[] memory hitmap, uint256 index, uint256 state) internal pure {
         if (index >= hitmap.length) {
             revert("Index out of bounds");
