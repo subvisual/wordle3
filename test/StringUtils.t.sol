@@ -84,7 +84,7 @@ contract TestStringMethods is Test {
     }
 
     // test hitmap completion checker
-    function test_completeHitmap() public pure {
+    function test_isHitmapComplete() public pure {
         StringUtils.CharState[] memory hitmap = StringUtils.generateHitmap("HI");
         assertFalse(StringUtils.isHitmapComplete(hitmap));
 
