@@ -1,7 +1,9 @@
+// SPDX-License-Identifier: MIT
 pragma solidity ^0.8.28;
 
 import {Test} from "forge-std/Test.sol";
 import {StringUtils} from "../src/StringUtils.sol";
+import "../src/Interfaces.sol";
 
 contract TestStringMethods is Test {
     using StringUtils for string;
@@ -29,7 +31,7 @@ contract TestStringMethods is Test {
 
     // test string comparator
     function test_compareStrings() public pure {
-        // accept non-ascii for the timebeing
+        // accept non-ascii for the time being
         assertTrue(StringUtils.areEqual(unicode"👋", unicode"👋"));
         assertTrue(StringUtils.areEqual("HELLO", "hello"));
         assertFalse(StringUtils.areEqual("HELLO", "hello!"));
@@ -52,7 +54,7 @@ contract TestStringMethods is Test {
 
     // test generate hitmap function
     function test_generateHitmap() public pure {
-        StringUtils.CharState[] memory hitmap = StringUtils.generateHitmap("HI");
+        StructTypes.CharState[] memory hitmap = StringUtils.generateHitmap("HI");
 
         // test length
         assertEq(hitmap.length, 2);
@@ -67,7 +69,7 @@ contract TestStringMethods is Test {
 
     // test update hitmap function
     function test_updateHitmap() public {
-        StringUtils.CharState[] memory hitmap = StringUtils.generateHitmap("HI");
+        StructTypes.CharState[] memory hitmap = StringUtils.generateHitmap("HI");
         StringUtils.updateHitmap(hitmap, 0, 1);
         assertEq(hitmap[0].state, 1);
 
@@ -78,14 +80,14 @@ contract TestStringMethods is Test {
         vm.expectRevert("Invalid state.");
         StringUtils.updateHitmap(hitmap, 0, 3);
 
-        // test index out ouf bounds
+        // test index out of bounds
         vm.expectRevert("Index out of bounds");
         StringUtils.updateHitmap(hitmap, 3, 2);
     }
 
     // test hitmap completion checker
     function test_isHitmapComplete() public pure {
-        StringUtils.CharState[] memory hitmap = StringUtils.generateHitmap("HI");
+        StructTypes.CharState[] memory hitmap = StringUtils.generateHitmap("HI");
         assertFalse(StringUtils.isHitmapComplete(hitmap));
 
         // test for completion
