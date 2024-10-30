@@ -11,13 +11,28 @@ contract Wordle {
     // events
     event NoMoreAttempts(string message);
     event CorrectGuess(string guess, string message);
-    event RemainingAttempts(uint256 attempts, string message);
+    event RemainingAttempts(uint256 attemptsLeft, string message);
 
     // declare hidden word variable
     string public HIDDEN_WORD;
     StructTypes.CharState[] public HIDDEN_WORD_HITMAP;
     StructTypes.CharState[] public ALPHABET;
-    uint256 public ATTEMPTS = 0;
+    uint256 public ATTEMPTS;
+
+    constructor(string memory word) {
+        if (!word.isASCII()) {
+            revert("Non-ASCII strings are not supported.");
+        }
+
+        if (bytes(word).length != 5) {
+            revert("Word must be 5 characters long.");
+        }
+
+        HIDDEN_WORD = word;
+        HIDDEN_WORD_HITMAP = StringUtils.generateHitmap(word);
+        ALPHABET = StringUtils.generateHitmap("abcdefghijklmnopqrstuvwxyz");
+        ATTEMPTS = 1;
+    }
 
     // setup hidden word
     // todo: implement obfuscation. would keccak256 be a good approach?
@@ -110,21 +125,28 @@ contract Wordle {
         return StringUtils.isHitmapComplete(HIDDEN_WORD_HITMAP);
     }
 
-    function game(string calldata guess) public returns (bool) {
-        if (ATTEMPTS >= 6) {
+    /*
+    Main game function that checks if attempts are exhausted 
+    and processes the user's guess accordingly.
+    New attempts are managed within tryGuess().
+    */
+    function handleAttempt(string calldata guess) public returns (bool) {
+        // using 1-index for clarity
+        if (ATTEMPTS >= 7) {
             emit NoMoreAttempts("No more attempts remaining.");
-            return false;
+            return false; // Game over
         }
 
-        ATTEMPTS++;
-        bool result = tryGuess(guess);
+        // Perform a new attempt
+        bool newAttempt = tryGuess(guess);
 
-        if (result) {
+        if (newAttempt) {
             emit CorrectGuess(guess, "Well done!");
-            return true;
+            return true; // Correct guess
         } else {
-            emit RemainingAttempts(6 - ATTEMPTS, "- Atempts left.");
-            return false;
+            console.log(7 - ATTEMPTS, "Attempts left.");
+            emit RemainingAttempts(7 - ATTEMPTS, "Attempts left."); // Clear message
+            return false; // Incorrect guess
         }
     }
 }

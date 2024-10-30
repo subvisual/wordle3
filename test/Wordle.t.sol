@@ -12,16 +12,16 @@ contract WordleTest is Test {
     Wordle wordle;
 
     function setUp() public {
-        wordle = new Wordle();
+        wordle = new Wordle("BONGO");
     }
 
     // test word hiding
     function test_hideWord() public {
         // correct input
-        wordle.hideWord("BINGO");
-        StructTypes.CharState[] memory hitmap = wordle.getHiddenWord();
+        wordle = new Wordle("BINGO");
 
         // test if hitmap is generated correctly
+        StructTypes.CharState[] memory hitmap = wordle.getHiddenWord();
 
         // check if letters are correctly mapped
         assertEq(hitmap[0].char, "b");
@@ -37,18 +37,18 @@ contract WordleTest is Test {
 
         // non-ascii input
         vm.expectRevert("Non-ASCII strings are not supported.");
-        wordle.hideWord(unicode"👋");
+        wordle = new Wordle(unicode"👋");
 
         // wrong size
         vm.expectRevert("Word must be 5 characters long.");
-        wordle.hideWord("Banana");
+        wordle = new Wordle("Banana");
         vm.expectRevert("Word must be 5 characters long.");
-        wordle.hideWord("Bun");
+        wordle = new Wordle("Bun");
     }
 
     // test alphabet initialization
     function test_alphabet() public {
-        wordle.setupAlphabet();
+        wordle = new Wordle("HELLO");
         StructTypes.CharState[] memory alphabet = wordle.getAlphabet();
         assertEq(alphabet[0].char, "a");
         assertEq(alphabet[1].char, "b");
@@ -84,17 +84,14 @@ contract WordleTest is Test {
 
     // test guess mechanic
     function test_tryGuess() public {
-        wordle.setupAlphabet();
-
-        // setup hidden word
-        wordle.hideWord("BONGO");
+        wordle = new Wordle("BONGO");
 
         // test wrong guess
         assertFalse(wordle.tryGuess("olive"));
 
         // test attempt increment
         uint256 attempts = wordle.getAttempts();
-        assertEq(attempts, 1);
+        assertEq(attempts, 2);
 
         // test hitmap updates
         StructTypes.CharState[] memory hitmap = wordle.getHiddenWord();
@@ -109,5 +106,22 @@ contract WordleTest is Test {
 
         // test correct guess
         assertTrue(wordle.tryGuess("BONGO"));
+    }
+
+    // test attempt handling
+    function test_handleAttempt() public {
+        wordle = new Wordle("BINGO");
+        StructTypes.CharState[] memory hitmap = wordle.getHiddenWord();
+
+        // test if attempts and messages are emited correctly
+        assertFalse(wordle.handleAttempt("olive"));
+
+        // test attempt limit reached
+        assertFalse(wordle.handleAttempt("oliva"));
+        assertFalse(wordle.handleAttempt("super"));
+        assertFalse(wordle.handleAttempt("alive"));
+        assertFalse(wordle.handleAttempt("bongo"));
+        assertFalse(wordle.handleAttempt("pengu"));
+        assertFalse(wordle.handleAttempt("bingo"));
     }
 }
