@@ -34,24 +34,8 @@ contract Wordle {
         ATTEMPTS = 1;
     }
 
-    // setup hidden word
-    // todo: implement obfuscation. would keccak256 be a good approach?
-    function hideWord(string calldata word) public {
-        if (!word.isASCII()) {
-            revert("Non-ASCII strings are not supported.");
-        }
-
-        if (bytes(word).length != 5) {
-            revert("Word must be 5 characters long.");
-        }
-
-        // generates the hitmap of the word and returns it
-        HIDDEN_WORD = word;
-        HIDDEN_WORD_HITMAP = StringUtils.generateHitmap(word);
-    }
-
+    // get methods
     // verify if hidden word was setup correctly
-    // todo: remove once tests are finishied
     function getHiddenWord() public view returns (StructTypes.CharState[] memory) {
         return HIDDEN_WORD_HITMAP;
     }
@@ -62,11 +46,6 @@ contract Wordle {
 
     function getAttempts() public view returns (uint256) {
         return ATTEMPTS;
-    }
-
-    // setup alphabet hitmap
-    function setupAlphabet() public {
-        ALPHABET = StringUtils.generateHitmap("abcdefghijklmnopqrstuvwxyz");
     }
 
     /*
