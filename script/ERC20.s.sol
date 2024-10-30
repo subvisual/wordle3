@@ -10,7 +10,7 @@ contract ERC20Script is Script {
         vm.startBroadcast(deployerPrivateKey);
 
         // Deploy the token
-        WDLToken token = new WDLToken(1000); // Corrected this line
+        WDLToken token = new WDLToken(1000); 
 
         vm.stopBroadcast();
     }
