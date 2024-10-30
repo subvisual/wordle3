@@ -123,7 +123,6 @@ contract Wordle {
             emit CorrectGuess(guess, "Well done!");
             return true; // Correct guess
         } else {
-            console.log(7 - ATTEMPTS, "Attempts left.");
             emit RemainingAttempts(7 - ATTEMPTS, "Attempts left."); // Clear message
             return false; // Incorrect guess
         }
