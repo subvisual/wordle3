@@ -4,8 +4,11 @@ pragma solidity ^0.8.28;
 import {Test} from "forge-std/Test.sol";
 import {Wordle} from "../src/Wordle.sol";
 import {StructTypes} from "../src/Interfaces.sol";
+import {StringUtils} from "../src/StringUtils.sol";
 
 contract WordleTest is Test {
+    using StringUtils for string;
+
     Wordle wordle;
 
     function setUp() public {
@@ -77,5 +80,34 @@ contract WordleTest is Test {
         for (uint256 i = 0; i < alphabet.length; i++) {
             assertEq(alphabet[i].state, 0);
         }
+    }
+
+    // test guess mechanic
+    function test_tryGuess() public {
+        wordle.setupAlphabet();
+
+        // setup hidden word
+        wordle.hideWord("BONGO");
+
+        // test wrong guess
+        assertFalse(wordle.tryGuess("olive"));
+
+        // test attempt increment
+        uint256 attempts = wordle.getAttempts();
+        assertEq(attempts, 1);
+
+        // test hitmap updates
+        StructTypes.CharState[] memory hitmap = wordle.getHiddenWord();
+        StructTypes.CharState[] memory alphabet = wordle.getAlphabet();
+        uint256 oIdx = StringUtils.findIndex(alphabet, "o");
+        uint256 vIdx = StringUtils.findIndex(alphabet, "v");
+        assertEq(hitmap[0].state, 0);
+        assertEq(hitmap[1].state, 1);
+        assertEq(hitmap[4].state, 1);
+        assertEq(alphabet[oIdx].state, 1);
+        assertEq(alphabet[vIdx].state, 3);
+
+        // test correct guess
+        assertTrue(wordle.tryGuess("BONGO"));
     }
 }
