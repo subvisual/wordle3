@@ -19,7 +19,7 @@ contract Wordle {
         }
 
         if (bytes(word).length != 5) {
-            revert("Word bust be 5 characters long.");
+            revert("Word must be 5 characters long.");
         }
 
         // generates the hitmap of the word and returns it
@@ -32,7 +32,7 @@ contract Wordle {
         return HIDDEN_WORD;
     }
 
-    function getAlhabet() public view returns (StructTypes.CharState[] memory) {
+    function getAlphabet() public view returns (StructTypes.CharState[] memory) {
         return ALPHABET;
     }
 

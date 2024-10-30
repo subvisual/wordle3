@@ -37,16 +37,16 @@ contract WordleTest is Test {
         wordle.hideWord(unicode"👋");
 
         // wrong size
-        vm.expectRevert("Word bust be 5 characters long.");
+        vm.expectRevert("Word must be 5 characters long.");
         wordle.hideWord("Banana");
-        vm.expectRevert("Word bust be 5 characters long.");
+        vm.expectRevert("Word must be 5 characters long.");
         wordle.hideWord("Bun");
     }
 
     // test alphabet initialization
     function test_alphabet() public {
         wordle.setupAlphabet();
-        StructTypes.CharState[] memory alphabet = wordle.getAlhabet();
+        StructTypes.CharState[] memory alphabet = wordle.getAlphabet();
         assertEq(alphabet[0].char, "a");
         assertEq(alphabet[1].char, "b");
         assertEq(alphabet[2].char, "c");
