@@ -95,4 +95,19 @@ contract TestStringMethods is Test {
         StringUtils.updateHitmap(hitmap, 1, 2);
         assertTrue(StringUtils.isHitmapComplete(hitmap));
     }
+
+    // test find index
+    function test_findIndex() public pure {
+        StructTypes.CharState[] memory alphabet = StringUtils.generateHitmap("abcdefghijklmnopqrstuvwxyz");
+        assertEq(StringUtils.findIndex(alphabet, "a"), 0);
+        assertEq(StringUtils.findIndex(alphabet, "b"), 1);
+        assertEq(StringUtils.findIndex(alphabet, "z"), 25);
+    }
+
+    // test find all occurences
+    function test_findAllOccurences() public pure {
+        assertEq(StringUtils.findAllOccurences("hello", "l").length, 2);
+        assertEq(StringUtils.findAllOccurences("hello", "z").length, 0);
+        assertEq(StringUtils.findAllOccurences("hello", "h").length, 1);
+    }
 }
