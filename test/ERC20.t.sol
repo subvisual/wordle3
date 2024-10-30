@@ -16,24 +16,24 @@ contract ERC20Test is Test {
 
     function test_Mint() public {
         // Check the initial balance of the deployer
-        assertEq(token.balanceOf(address(this)), 1000);
+        assertEq(token.balanceOf(address(this)), 1000 * 10 ** 18);
     }
 
     function test_Transfer() public {
-        // not enough supply
+        // Not enough supply (expect revert for trying to transfer more than the balance)
         vm.expectRevert();
-        token.transfer(user1, 1001);
+        token.transfer(user1, 1001 * 10 ** 18);
 
-        // transfer some
-        token.transfer(user1, 100);
-        assertEq(token.balanceOf(user1), 100);
-        assertEq(token.balanceOf(address(this)), 900);
+        // Transfer some tokens to user1
+        token.transfer(user1, 100 * 10 ** 18);
+        assertEq(token.balanceOf(user1), 100 * 10 ** 18);
+        assertEq(token.balanceOf(address(this)), 900 * 10 ** 18);
 
-        // transfer between
+        // Transfer from user1 to user2
         vm.prank(user1);
-        token.approve(address(this), 50);
-        token.transferFrom(user1, user2, 50);
-        assertEq(token.balanceOf(user1), 50);
-        assertEq(token.balanceOf(user2), 50);
+        token.approve(address(this), 50 * 10 ** 18);
+        token.transferFrom(user1, user2, 50 * 10 ** 18);
+        assertEq(token.balanceOf(user1), 50 * 10 ** 18);
+        assertEq(token.balanceOf(user2), 50 * 10 ** 18);
     }
 }
