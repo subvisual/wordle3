@@ -65,8 +65,45 @@ library StringUtils {
         return false;
     }
 
-    // function that generates the hitmap for the target string and controls
-    // correct / wrong state;
+    // function that returns the index of a letter from a string hitmap
+    // this function stops at the first occurence and is only fit for alphabet hitmap updating
+    function findIndex(StructTypes.CharState[] memory target, string memory letter) internal pure returns (uint256) {
+        for (uint256 i = 0; i < target.length; i++) {
+            if (areEqual(target[i].char, letter)) {
+                return i;
+            }
+        }
+        return 0;
+    }
+
+    function findAllOccurences(string memory target, string memory letter) internal pure returns (uint256[] memory) {
+        // Check if the letter is not empty
+        require(bytes(letter).length == 1, "Letter must be a single character.");
+
+        bytes memory bStr = bytes(toLowerCase(target));
+        bytes memory bLetter = bytes(toLowerCase(letter));
+
+        // Create a dynamic array to hold the occurrences
+        uint256[] memory occurrences = new uint256[](bStr.length);
+        uint256 count = 0; // Counter for the number of occurrences
+
+        for (uint256 i = 0; i < bStr.length; i++) {
+            if (bStr[i] == bLetter[0]) {
+                occurrences[count] = i; // Store the index of occurrence
+                count++;
+            }
+        }
+
+        // Resize the array to the number of found occurrences
+        uint256[] memory result = new uint256[](count);
+        for (uint256 j = 0; j < count; j++) {
+            result[j] = occurrences[j];
+        }
+
+        return result;
+    }
+
+    // function that returns the index of a letter from a string hi   // correct / wrong state;
     function generateHitmap(string memory target) internal pure returns (StructTypes.CharState[] memory) {
         bytes memory bStr = bytes(toLowerCase(target));
         StructTypes.CharState[] memory res = new StructTypes.CharState[](bStr.length);
@@ -84,7 +121,7 @@ library StringUtils {
         if (state > 2) {
             revert("Invalid state.");
         }
-        if (hitmap[index].state < 2) {
+        if (hitmap[index].state < 3) {
             hitmap[index].state = state;
         }
     }
@@ -92,7 +129,7 @@ library StringUtils {
     // function that checks if the hitmap is complete
     function isHitmapComplete(StructTypes.CharState[] memory hitmap) internal pure returns (bool) {
         for (uint256 i = 0; i < hitmap.length; i++) {
-            if (hitmap[i].state == 0) {
+            if (hitmap[i].state != 2) {
                 return false;
             }
         }

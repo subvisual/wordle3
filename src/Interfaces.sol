@@ -9,6 +9,6 @@ interface StructTypes {
     */
     struct CharState {
         string char;
-        uint256 state; // 0 = miss ; 1 = exists ; 2 = hit
+        uint256 state; // 0 = miss ; 1 = exists ; 2 = hit ; 3 = discarded
     }
 }
