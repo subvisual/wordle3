@@ -8,15 +8,18 @@ import {console} from "forge-std/console.sol";
 contract Wordle {
     using StringUtils for string;
 
+    // events
+    event NoMoreAttempts(string message);
+    event CorrectGuess(string guess, string message);
+    event RemainingAttempts(uint256 attemptsLeft, string message);
+
     // declare hidden word variable
     string public HIDDEN_WORD;
     StructTypes.CharState[] public HIDDEN_WORD_HITMAP;
     StructTypes.CharState[] public ALPHABET;
-    uint256 public ATTEMPTS = 0;
+    uint256 public ATTEMPTS;
 
-    // setup hidden word
-    // todo: implement obfuscation. would keccak256 be a good approach?
-    function hideWord(string calldata word) public {
+    constructor(string memory word) {
         if (!word.isASCII()) {
             revert("Non-ASCII strings are not supported.");
         }
@@ -25,13 +28,14 @@ contract Wordle {
             revert("Word must be 5 characters long.");
         }
 
-        // generates the hitmap of the word and returns it
         HIDDEN_WORD = word;
         HIDDEN_WORD_HITMAP = StringUtils.generateHitmap(word);
+        ALPHABET = StringUtils.generateHitmap("abcdefghijklmnopqrstuvwxyz");
+        ATTEMPTS = 1;
     }
 
+    // get methods
     // verify if hidden word was setup correctly
-    // todo: remove once tests are finishied
     function getHiddenWord() public view returns (StructTypes.CharState[] memory) {
         return HIDDEN_WORD_HITMAP;
     }
@@ -44,16 +48,15 @@ contract Wordle {
         return ATTEMPTS;
     }
 
-    // setup alphabet hitmap
-    function setupAlphabet() public {
-        ALPHABET = StringUtils.generateHitmap("abcdefghijklmnopqrstuvwxyz");
-    }
-
     /*
     Processes the guess, comparing it to the hidden word and assessing 
     and updating the hitmap and alphabet accordingly.
     */
     function tryGuess(string calldata guess) public returns (bool) {
+        if (!guess.isASCII()) {
+            revert("Non-ASCII strings are not supported.");
+        }
+
         ATTEMPTS++;
         StructTypes.CharState[] memory guessHitmap = StringUtils.generateHitmap(guess);
 
@@ -99,5 +102,29 @@ contract Wordle {
 
         // Check for the winning condition after processing all characters.
         return StringUtils.isHitmapComplete(HIDDEN_WORD_HITMAP);
+    }
+
+    /*
+    Main game function that checks if attempts are exhausted 
+    and processes the user's guess accordingly.
+    New attempts are managed within tryGuess().
+    */
+    function handleAttempt(string calldata guess) public returns (bool) {
+        // using 1-index for clarity
+        if (ATTEMPTS >= 7) {
+            emit NoMoreAttempts("No more attempts remaining.");
+            return false; // Game over
+        }
+
+        // Perform a new attempt
+        bool newAttempt = tryGuess(guess);
+
+        if (newAttempt) {
+            emit CorrectGuess(guess, "Well done!");
+            return true; // Correct guess
+        } else {
+            emit RemainingAttempts(7 - ATTEMPTS, "Attempts left."); // Clear message
+            return false; // Incorrect guess
+        }
     }
 }
