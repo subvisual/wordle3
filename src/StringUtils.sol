@@ -1,17 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.28;
 
-library StringUtils {
-    /* 
-    Struct used to store a character and its state
-    to be used as a hit map by the generateHitmap function
-    and functions that will manipulate the generated hitmap    
-    */
-    struct CharState {
-        string char;
-        uint256 state; // 0 = miss ; 1 = exists ; 2 = hit
-    }
+import {StructTypes} from "./Interfaces.sol";
 
+library StringUtils {
     // certify that a string is ASCII
     function isASCII(string memory word) public pure returns (bool) {
         bytes memory wordBytes = bytes(word);
@@ -42,12 +34,7 @@ library StringUtils {
     }
 
     // function that compares two strings
-    // this will be used to compare letter by letter
     function areEqual(string memory stringA, string memory stringB) internal pure returns (bool) {
-        // if (!isASCII(stringB) || !isASCII(stringB)) {
-        // 	revert ("Non-ASCII strings are not supported.");
-        // }
-
         bytes memory bStrA = bytes(toLowerCase(stringA));
         bytes memory bStrB = bytes(toLowerCase(stringB));
         if (bStrA.length != bStrB.length) {
@@ -62,7 +49,7 @@ library StringUtils {
         return true;
     }
 
-    // function that checks if a single letter exist in a string
+    // function that checks if a single letter exists in a string
     function contains(string memory target, string memory letter) internal pure returns (bool) {
         if (!isASCII(target) || !isASCII(letter)) {
             revert("Non-ASCII strings are not supported.");
@@ -80,21 +67,17 @@ library StringUtils {
 
     // function that generates the hitmap for the target string and controls
     // correct / wrong state;
-    function generateHitmap(string memory target) internal pure returns (CharState[] memory) {
+    function generateHitmap(string memory target) internal pure returns (StructTypes.CharState[] memory) {
         bytes memory bStr = bytes(toLowerCase(target));
-        CharState[] memory res = new CharState[](bStr.length);
+        StructTypes.CharState[] memory res = new StructTypes.CharState[](bStr.length);
         for (uint256 i = 0; i < bStr.length; i++) {
-            res[i] = CharState({char: string(abi.encodePacked((bStr[i]))), state: 0});
+            res[i] = StructTypes.CharState({char: string(abi.encodePacked(bStr[i])), state: 0});
         }
         return res;
     }
 
     // function that updates the hitmap state for a given index
-    function updateHitmap(CharState[] memory hitmap, uint256 index, uint256 state)
-        internal
-        pure
-        returns (CharState[] memory)
-    {
+    function updateHitmap(StructTypes.CharState[] memory hitmap, uint256 index, uint256 state) internal pure {
         if (index >= hitmap.length) {
             revert("Index out of bounds");
         }
@@ -107,7 +90,7 @@ library StringUtils {
     }
 
     // function that checks if the hitmap is complete
-    function isHitmapComplete(CharState[] memory hitmap) internal pure returns (bool) {
+    function isHitmapComplete(StructTypes.CharState[] memory hitmap) internal pure returns (bool) {
         for (uint256 i = 0; i < hitmap.length; i++) {
             if (hitmap[i].state == 0) {
                 return false;
