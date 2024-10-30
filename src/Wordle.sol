@@ -8,6 +8,11 @@ import {console} from "forge-std/console.sol";
 contract Wordle {
     using StringUtils for string;
 
+    // events
+    event NoMoreAttempts(string message);
+    event CorrectGuess(string guess, string message);
+    event RemainingAttempts(uint256 attempts, string message);
+
     // declare hidden word variable
     string public HIDDEN_WORD;
     StructTypes.CharState[] public HIDDEN_WORD_HITMAP;
@@ -54,6 +59,10 @@ contract Wordle {
     and updating the hitmap and alphabet accordingly.
     */
     function tryGuess(string calldata guess) public returns (bool) {
+        if (!guess.isASCII()) {
+            revert("Non-ASCII strings are not supported.");
+        }
+
         ATTEMPTS++;
         StructTypes.CharState[] memory guessHitmap = StringUtils.generateHitmap(guess);
 
@@ -99,5 +108,23 @@ contract Wordle {
 
         // Check for the winning condition after processing all characters.
         return StringUtils.isHitmapComplete(HIDDEN_WORD_HITMAP);
+    }
+
+    function game(string calldata guess) public returns (bool) {
+        if (ATTEMPTS >= 6) {
+            emit NoMoreAttempts("No more attempts remaining.");
+            return false;
+        }
+
+        ATTEMPTS++;
+        bool result = tryGuess(guess);
+
+        if (result) {
+            emit CorrectGuess(guess, "Well done!");
+            return true;
+        } else {
+            emit RemainingAttempts(6 - ATTEMPTS, "- Atempts left.");
+            return false;
+        }
     }
 }
