@@ -44,6 +44,10 @@ contract Wordle {
         return balance >= playCost;
     }
 
+    function tokenFaucet(address player) public {
+        token.transfer(player, 10 * 10 ** 18);
+    }
+
     // get methods
     // verify if hidden word was setup correctly
     function getHiddenWord() public view returns (StructTypes.CharState[] memory) {

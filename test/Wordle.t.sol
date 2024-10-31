@@ -18,6 +18,7 @@ contract WordleTest is Test {
     function setUp() public {
         token = new WDLToken(1000);
         wordle = new Wordle("BONGO", address(token));
+        token.transfer(address(wordle), 500 * 10 ** 18);
         token.transfer(player1, 20 * 10 ** 18);
     }
 
@@ -25,6 +26,12 @@ contract WordleTest is Test {
     function test_canPlay() public {
         assertTrue(wordle.canPlay(player1));
         assertFalse(wordle.canPlay(player2));
+    }
+
+    function test_faucet() public {
+        assertEq(token.balanceOf(player2), 0);
+        wordle.tokenFaucet(player2);
+        assertEq(token.balanceOf(player2), 10 * 10 ** 18);
     }
 
     // test word hiding
