@@ -35,29 +35,25 @@ contract Wordle {
         }
         token = IERC20(tokenAddress);
         HIDDEN_WORD = word;
-        // HIDDEN_WORD_HITMAP = StringUtils.generateHitmap(word);
-        // ALPHABET = StringUtils.generateHitmap("abcdefghijklmnopqrstuvwxyz");
-        // ATTEMPTS = 6;
     }
 
-   function initAttempts(address player) public {
-    require(canPlay(player), "You don't have enough tokens to play.");
+    function initAttempts(address player) public {
+        require(canPlay(player), "You don't have enough tokens to play.");
 
-    // Calculate the start of today
-    uint256 todayStart = block.timestamp - (block.timestamp % 1 days);
-    
-    // Ensure the player hasn't played today
-    require(lastAttemptTime[player] <= todayStart, "You can only play once per day.");
+        // Calculate the start of today
+        uint256 todayStart = block.timestamp - (block.timestamp % 1 days);
 
-    // Update last attempt time to current time
-    lastAttemptTime[player] = block.timestamp;
+        // Ensure the player hasn't played today
+        require(lastAttemptTime[player] <= todayStart, "You can only play once per day.");
 
-    // Initialize player data
-    ATTEMPTS[player] = 6; // Setting the initial number of attempts
-    HIDDEN_WORD_HITMAP[player] = StringUtils.generateHitmap(HIDDEN_WORD);
-    ALPHABET[player] = StringUtils.generateHitmap("abcdefghijklmnopqrstuvwxyz");
-}
+        // Update last attempt time to current time
+        lastAttemptTime[player] = block.timestamp;
 
+        // Initialize player data
+        ATTEMPTS[player] = 6; // Setting the initial number of attempts
+        HIDDEN_WORD_HITMAP[player] = StringUtils.generateHitmap(HIDDEN_WORD);
+        ALPHABET[player] = StringUtils.generateHitmap("abcdefghijklmnopqrstuvwxyz");
+    }
 
     function canPlay(address player) public view returns (bool) {
         uint256 playCost = 1 * (10 ** 18);

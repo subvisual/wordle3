@@ -41,15 +41,15 @@ contract WordleTest is Test {
     function test_initAttempts() public {
         vm.warp(60 minutes);
         wordle.initAttempts(player1);
-        
+
         // tests if attempts were correctly initialized
         uint256 attempts = wordle.getPlayerAttempts(player1);
         assertEq(attempts, 6);
-        
+
         // throws error if player tries to play twice
         vm.expectRevert();
         wordle.initAttempts(player1);
-        
+
         // fails if player tries to play without enough tokens
         vm.expectRevert();
         wordle.initAttempts(player2);
@@ -95,7 +95,7 @@ contract WordleTest is Test {
         wordle = new Wordle("Banana", address(token));
         vm.expectRevert("Word must be 5 characters long.");
         wordle = new Wordle("Bun", address(token));
-    }    
+    }
 
     // test guess mechanic
     function test_tryGuess() public {
