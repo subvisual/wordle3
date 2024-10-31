@@ -18,8 +18,17 @@ contract WordleTest is Test {
     function setUp() public {
         token = new WDLToken(1000);
         wordle = new Wordle("BONGO", address(token));
+
+        // top up rewards pool and transfer some to player 1
         token.transfer(address(wordle), 500 * 10 ** 18);
         token.transfer(player1, 20 * 10 ** 18);
+
+        // simulate approval for both players
+        vm.prank(player1);
+        token.approve(address(wordle), 20 * 10 ** 18);
+
+        vm.prank(player2);
+        token.approve(address(wordle), 20 * 10 ** 18);
     }
 
     // test if player balance checking through can play
@@ -38,8 +47,17 @@ contract WordleTest is Test {
         wordle.tokenFaucet(player2);
     }
 
+    function test_chargePlauer() public {
+        vm.warp(60 minutes);
+
+        // test if player gets charged the correct amount
+        wordle.initAttempts(player1);
+        assertEq(token.balanceOf(player1), 19 * 10 ** 18);
+    }
+
     function test_initAttempts() public {
         vm.warp(60 minutes);
+
         wordle.initAttempts(player1);
 
         // tests if attempts were correctly initialized

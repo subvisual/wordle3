@@ -54,6 +54,14 @@ contract Wordle {
         HIDDEN_WORD = word;
     }
 
+    // player and attempt-related functions
+
+    /*
+    Function that initializes the player data for the game.
+    Checks if the player has enough funds to play and if they haven't played today.
+    If all condtions are met, the player's data is initialized.
+    */
+
     function initAttempts(address player) public {
         require(canPlay(player), "You don't have enough tokens to play.");
 
@@ -62,6 +70,14 @@ contract Wordle {
 
         // Ensure the player hasn't played today
         require(lastAttemptTime[player] <= todayStart, "You can only play once per day.");
+
+        // Ensure the player has sufficient allowance
+        uint256 allowance = token.allowance(player, address(this));
+        require(allowance >= 1 * (10 ** 18), "Insuficcient allowance for transfer.");
+
+        // charges the player the play cost
+        uint256 attemptPrice = 1 * (10 ** 18);
+        require(token.transferFrom(player, address(this), attemptPrice), "Something went wrong.");
 
         // Update last attempt time to current time
         lastAttemptTime[player] = block.timestamp;
