@@ -16,12 +16,14 @@ contract Wordle {
 
     // interfaces
     IERC20 public token;
+    mapping(address => bool) public usedFaucet;
+    mapping(address => uint256) public lastAttemptTime;
 
     // declare hidden word variable
     string public HIDDEN_WORD;
-    StructTypes.CharState[] public HIDDEN_WORD_HITMAP;
-    StructTypes.CharState[] public ALPHABET;
-    uint256 public ATTEMPTS;
+    mapping(address => StructTypes.CharState[]) public HIDDEN_WORD_HITMAP;
+    mapping(address => StructTypes.CharState[]) public ALPHABET;
+    mapping(address => uint256) public ATTEMPTS;
 
     constructor(string memory word, address tokenAddress) {
         if (!word.isASCII()) {
@@ -33,10 +35,27 @@ contract Wordle {
         }
         token = IERC20(tokenAddress);
         HIDDEN_WORD = word;
-        HIDDEN_WORD_HITMAP = StringUtils.generateHitmap(word);
-        ALPHABET = StringUtils.generateHitmap("abcdefghijklmnopqrstuvwxyz");
-        ATTEMPTS = 6;
+        // HIDDEN_WORD_HITMAP = StringUtils.generateHitmap(word);
+        // ALPHABET = StringUtils.generateHitmap("abcdefghijklmnopqrstuvwxyz");
+        // ATTEMPTS = 6;
     }
+
+   function initAttempts(address player) public {
+    require(canPlay(player), "You don't have enough tokens to play.");
+
+    // Calculate the start of today
+    uint256 todayStart = block.timestamp - (block.timestamp % 1 days);
+    
+    // Ensure the player hasn't played today
+    require(lastAttemptTime[player] <= todayStart, "You can only play once per day.");
+
+    // Update last attempt time to current time
+    lastAttemptTime[player] = block.timestamp;
+
+    // Initialize player data
+    ATTEMPTS[player] = 6; // Setting the initial number of attempts
+}
+
 
     function canPlay(address player) public view returns (bool) {
         uint256 playCost = 1 * (10 ** 18);
@@ -45,99 +64,101 @@ contract Wordle {
     }
 
     function tokenFaucet(address player) public {
+        require(!usedFaucet[player], "You have already used the faucet.");
+        usedFaucet[player] = true;
         token.transfer(player, 10 * 10 ** 18);
     }
 
     // get methods
     // verify if hidden word was setup correctly
-    function getHiddenWord() public view returns (StructTypes.CharState[] memory) {
-        return HIDDEN_WORD_HITMAP;
+    // function getHiddenWord() public view returns (StructTypes.CharState[] memory) {
+    //     return HIDDEN_WORD_HITMAP;
+    // }
+
+    // function getAlphabet() public view returns (StructTypes.CharState[] memory) {
+    //     return ALPHABET;
+    // }
+
+    function getPlayerAttempts(address player) public view returns (uint256) {
+        return ATTEMPTS[player];
     }
 
-    function getAlphabet() public view returns (StructTypes.CharState[] memory) {
-        return ALPHABET;
-    }
+    // /*
+    // Processes the guess, comparing it to the hidden word and assessing
+    // and updating the hitmap and alphabet accordingly.
+    // */
+    // function tryGuess(string calldata guess) public returns (bool) {
+    //     if (!guess.isASCII()) {
+    //         revert("Non-ASCII strings are not supported.");
+    //     }
 
-    function getAttempts() public view returns (uint256) {
-        return ATTEMPTS;
-    }
+    //     if (bytes(guess).length != 5) {
+    //         revert("Word must be 5 characters long.");
+    //     }
 
-    /*
-    Processes the guess, comparing it to the hidden word and assessing 
-    and updating the hitmap and alphabet accordingly.
-    */
-    function tryGuess(string calldata guess) public returns (bool) {
-        if (!guess.isASCII()) {
-            revert("Non-ASCII strings are not supported.");
-        }
+    //     if (ATTEMPTS == 0) {
+    //         emit NoMoreAttempts("You have no more attempts left.");
+    //         return false;
+    //     }
 
-        if (bytes(guess).length != 5) {
-            revert("Word must be 5 characters long.");
-        }
+    //     if (StringUtils.areEqual(guess, HIDDEN_WORD)) {
+    //         emit CorrectGuess(guess, "Well done!");
+    //         return true;
+    //     }
 
-        if (ATTEMPTS == 0) {
-            emit NoMoreAttempts("You have no more attempts left.");
-            return false;
-        }
+    //     emit RemainingAttempts(ATTEMPTS, "Attempts left.");
+    //     ATTEMPTS--;
 
-        if (StringUtils.areEqual(guess, HIDDEN_WORD)) {
-            emit CorrectGuess(guess, "Well done!");
-            return true;
-        }
+    //     StructTypes.CharState[] memory guessHitmap = StringUtils.generateHitmap(guess);
 
-        emit RemainingAttempts(ATTEMPTS, "Attempts left.");
-        ATTEMPTS--;
+    //     // Check if the guess matches the hidden word immediately.
+    //     if (StringUtils.areEqual(guess, HIDDEN_WORD)) {
+    //         return true;
+    //     }
 
-        StructTypes.CharState[] memory guessHitmap = StringUtils.generateHitmap(guess);
+    //     /*
+    //     Loop through each character of the guess hitmap. For each character,
+    //     update the hitmap and alphabet states based on the hit/miss/exist logic.
+    //     */
+    //     for (uint256 i = 0; i < guessHitmap.length; i++) {
+    //         // Find the index of the letter in the alphabet for state updates.
+    //         uint256 alphaIdx = StringUtils.findIndex(ALPHABET, guessHitmap[i].char);
 
-        // Check if the guess matches the hidden word immediately.
-        if (StringUtils.areEqual(guess, HIDDEN_WORD)) {
-            return true;
-        }
+    //         /*
+    //         If the character and its index match the hidden word,
+    //         update both hitmap and alphabet states to indicate a correct guess.
+    //         */
+    //         if (StringUtils.areEqual(guessHitmap[i].char, HIDDEN_WORD_HITMAP[i].char)) {
+    //             HIDDEN_WORD_HITMAP[i].state = 2; // Final state for correct position
+    //             ALPHABET[alphaIdx].state = 2; // Final state in alphabet
+    //             continue;
+    //         }
 
-        /*
-        Loop through each character of the guess hitmap. For each character,
-        update the hitmap and alphabet states based on the hit/miss/exist logic.
-        */
-        for (uint256 i = 0; i < guessHitmap.length; i++) {
-            // Find the index of the letter in the alphabet for state updates.
-            uint256 alphaIdx = StringUtils.findIndex(ALPHABET, guessHitmap[i].char);
+    //         /*
+    //         If the character does not match, check if it exists in the hidden word.
+    //         Update the states to indicate existence or discard.
+    //         */
+    //         if (HIDDEN_WORD.contains(guessHitmap[i].char)) {
+    //             // [OPTIONAL?] Update hidden word hitmap to indicate the character exists in an incorrect position.
+    //             uint256[] memory occurrences = StringUtils.findAllOccurences(HIDDEN_WORD, guessHitmap[i].char);
+    //             for (uint256 j = 0; j < occurrences.length; j++) {
+    //                 HIDDEN_WORD_HITMAP[occurrences[j]].state = 1; // Intermediate state for existence
+    //             }
+    //             ALPHABET[alphaIdx].state = 1; // Intermediate state in alphabet
+    //         } else {
+    //             // The character does not exist in the hidden word; mark it as discarded.
+    //             ALPHABET[alphaIdx].state = 3; // Discarded state in alphabet
+    //         }
+    //     }
 
-            /*
-            If the character and its index match the hidden word,
-            update both hitmap and alphabet states to indicate a correct guess.
-            */
-            if (StringUtils.areEqual(guessHitmap[i].char, HIDDEN_WORD_HITMAP[i].char)) {
-                HIDDEN_WORD_HITMAP[i].state = 2; // Final state for correct position
-                ALPHABET[alphaIdx].state = 2; // Final state in alphabet
-                continue;
-            }
+    //     // Check for the winning condition after processing all characters.
+    //     // emits a message if the player wins
+    //     if (!StringUtils.isHitmapComplete(HIDDEN_WORD_HITMAP)) {
+    //         emit RemainingAttempts(ATTEMPTS, "Attempts left.");
+    //         return false;
+    //     }
 
-            /*
-            If the character does not match, check if it exists in the hidden word.
-            Update the states to indicate existence or discard.
-            */
-            if (HIDDEN_WORD.contains(guessHitmap[i].char)) {
-                // [OPTIONAL?] Update hidden word hitmap to indicate the character exists in an incorrect position.
-                uint256[] memory occurrences = StringUtils.findAllOccurences(HIDDEN_WORD, guessHitmap[i].char);
-                for (uint256 j = 0; j < occurrences.length; j++) {
-                    HIDDEN_WORD_HITMAP[occurrences[j]].state = 1; // Intermediate state for existence
-                }
-                ALPHABET[alphaIdx].state = 1; // Intermediate state in alphabet
-            } else {
-                // The character does not exist in the hidden word; mark it as discarded.
-                ALPHABET[alphaIdx].state = 3; // Discarded state in alphabet
-            }
-        }
-
-        // Check for the winning condition after processing all characters.
-        // emits a message if the player wins
-        if (!StringUtils.isHitmapComplete(HIDDEN_WORD_HITMAP)) {
-            emit RemainingAttempts(ATTEMPTS, "Attempts left.");
-            return false;
-        }
-
-        emit CorrectGuess(guess, "Well done!");
-        return true;
-    }
+    //     emit CorrectGuess(guess, "Well done!");
+    //     return true;
+    // }
 }

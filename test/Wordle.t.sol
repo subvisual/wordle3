@@ -32,98 +32,122 @@ contract WordleTest is Test {
         assertEq(token.balanceOf(player2), 0);
         wordle.tokenFaucet(player2);
         assertEq(token.balanceOf(player2), 10 * 10 ** 18);
+
+        // can't use more than once
+        vm.expectRevert();
+        wordle.tokenFaucet(player2);
     }
 
-    // test word hiding
-    function test_hideWord() public {
-        // correct input
-        wordle = new Wordle("BINGO", address(token));
-
-        // test if hitmap is generated correctly
-        StructTypes.CharState[] memory hitmap = wordle.getHiddenWord();
-
-        // check if letters are correctly mapped
-        assertEq(hitmap[0].char, "b");
-        assertEq(hitmap[1].char, "i");
-        assertEq(hitmap[2].char, "n");
-        assertEq(hitmap[3].char, "g");
-        assertEq(hitmap[4].char, "o");
-
-        // check if states are initialized correctly
-        for (uint256 i = 0; i < hitmap.length; i++) {
-            assertEq(hitmap[i].state, 0);
-        }
-
-        // non-ascii input
-        vm.expectRevert("Non-ASCII strings are not supported.");
-        wordle = new Wordle(unicode"👋", address(token));
-
-        // wrong size
-        vm.expectRevert("Word must be 5 characters long.");
-        wordle = new Wordle("Banana", address(token));
-        vm.expectRevert("Word must be 5 characters long.");
-        wordle = new Wordle("Bun", address(token));
+    function test_initAttempts() public {
+        vm.warp(60 minutes);
+        wordle.initAttempts(player1);
+        
+        // tests if attempts were correctly initialized
+        uint256 attempts = wordle.getPlayerAttempts(player1);
+        assertEq(attempts, 6);
+        
+        // throws error if player tries to play twice
+        vm.expectRevert();
+        wordle.initAttempts(player1);
+        
+        // fails if player tries to play without enough tokens
+        vm.expectRevert();
+        wordle.initAttempts(player2);
+        // but works after using the faucet
+        wordle.tokenFaucet(player2);
+        wordle.initAttempts(player2);
     }
 
-    // test alphabet initialization
-    function test_alphabet() public {
-        wordle = new Wordle("HELLO", address(token));
-        StructTypes.CharState[] memory alphabet = wordle.getAlphabet();
-        assertEq(alphabet[0].char, "a");
-        assertEq(alphabet[1].char, "b");
-        assertEq(alphabet[2].char, "c");
-        assertEq(alphabet[3].char, "d");
-        assertEq(alphabet[4].char, "e");
-        assertEq(alphabet[5].char, "f");
-        assertEq(alphabet[6].char, "g");
-        assertEq(alphabet[7].char, "h");
-        assertEq(alphabet[8].char, "i");
-        assertEq(alphabet[9].char, "j");
-        assertEq(alphabet[10].char, "k");
-        assertEq(alphabet[11].char, "l");
-        assertEq(alphabet[12].char, "m");
-        assertEq(alphabet[13].char, "n");
-        assertEq(alphabet[14].char, "o");
-        assertEq(alphabet[15].char, "p");
-        assertEq(alphabet[16].char, "q");
-        assertEq(alphabet[17].char, "r");
-        assertEq(alphabet[18].char, "s");
-        assertEq(alphabet[19].char, "t");
-        assertEq(alphabet[20].char, "u");
-        assertEq(alphabet[21].char, "v");
-        assertEq(alphabet[22].char, "w");
-        assertEq(alphabet[23].char, "x");
-        assertEq(alphabet[24].char, "y");
-        assertEq(alphabet[25].char, "z");
-        // check if states are initialized correctly
-        for (uint256 i = 0; i < alphabet.length; i++) {
-            assertEq(alphabet[i].state, 0);
-        }
-    }
+    // // test word hiding
+    // function test_hideWord() public {
+    //     // correct input
+    //     wordle = new Wordle("BINGO", address(token));
 
-    // test guess mechanic
-    function test_tryGuess() public {
-        wordle = new Wordle("BONGO", address(token));
+    //     // test if hitmap is generated correctly
+    //     StructTypes.CharState[] memory hitmap = wordle.getHiddenWord();
 
-        // test wrong guess
-        assertFalse(wordle.tryGuess("olive"));
+    //     // check if letters are correctly mapped
+    //     assertEq(hitmap[0].char, "b");
+    //     assertEq(hitmap[1].char, "i");
+    //     assertEq(hitmap[2].char, "n");
+    //     assertEq(hitmap[3].char, "g");
+    //     assertEq(hitmap[4].char, "o");
 
-        // test attempt spending
-        uint256 attempts = wordle.getAttempts();
-        assertEq(attempts, 5);
+    //     // check if states are initialized correctly
+    //     for (uint256 i = 0; i < hitmap.length; i++) {
+    //         assertEq(hitmap[i].state, 0);
+    //     }
 
-        // test hitmap updates
-        StructTypes.CharState[] memory hitmap = wordle.getHiddenWord();
-        StructTypes.CharState[] memory alphabet = wordle.getAlphabet();
-        uint256 oIdx = StringUtils.findIndex(alphabet, "o");
-        uint256 vIdx = StringUtils.findIndex(alphabet, "v");
-        assertEq(hitmap[0].state, 0);
-        assertEq(hitmap[1].state, 1);
-        assertEq(hitmap[4].state, 1);
-        assertEq(alphabet[oIdx].state, 1);
-        assertEq(alphabet[vIdx].state, 3);
+    //     // non-ascii input
+    //     vm.expectRevert("Non-ASCII strings are not supported.");
+    //     wordle = new Wordle(unicode"👋", address(token));
 
-        // test correct guess
-        assertTrue(wordle.tryGuess("BONGO"));
-    }
+    //     // wrong size
+    //     vm.expectRevert("Word must be 5 characters long.");
+    //     wordle = new Wordle("Banana", address(token));
+    //     vm.expectRevert("Word must be 5 characters long.");
+    //     wordle = new Wordle("Bun", address(token));
+    // }
+
+    // // test alphabet initialization
+    // function test_alphabet() public {
+    //     wordle = new Wordle("HELLO", address(token));
+    //     StructTypes.CharState[] memory alphabet = wordle.getAlphabet();
+    //     assertEq(alphabet[0].char, "a");
+    //     assertEq(alphabet[1].char, "b");
+    //     assertEq(alphabet[2].char, "c");
+    //     assertEq(alphabet[3].char, "d");
+    //     assertEq(alphabet[4].char, "e");
+    //     assertEq(alphabet[5].char, "f");
+    //     assertEq(alphabet[6].char, "g");
+    //     assertEq(alphabet[7].char, "h");
+    //     assertEq(alphabet[8].char, "i");
+    //     assertEq(alphabet[9].char, "j");
+    //     assertEq(alphabet[10].char, "k");
+    //     assertEq(alphabet[11].char, "l");
+    //     assertEq(alphabet[12].char, "m");
+    //     assertEq(alphabet[13].char, "n");
+    //     assertEq(alphabet[14].char, "o");
+    //     assertEq(alphabet[15].char, "p");
+    //     assertEq(alphabet[16].char, "q");
+    //     assertEq(alphabet[17].char, "r");
+    //     assertEq(alphabet[18].char, "s");
+    //     assertEq(alphabet[19].char, "t");
+    //     assertEq(alphabet[20].char, "u");
+    //     assertEq(alphabet[21].char, "v");
+    //     assertEq(alphabet[22].char, "w");
+    //     assertEq(alphabet[23].char, "x");
+    //     assertEq(alphabet[24].char, "y");
+    //     assertEq(alphabet[25].char, "z");
+    //     // check if states are initialized correctly
+    //     for (uint256 i = 0; i < alphabet.length; i++) {
+    //         assertEq(alphabet[i].state, 0);
+    //     }
+    // }
+
+    // // test guess mechanic
+    // function test_tryGuess() public {
+    //     wordle = new Wordle("BONGO", address(token));
+
+    //     // test wrong guess
+    //     assertFalse(wordle.tryGuess("olive"));
+
+    //     // test attempt spending
+    //     uint256 attempts = wordle.getAttempts();
+    //     assertEq(attempts, 5);
+
+    //     // test hitmap updates
+    //     StructTypes.CharState[] memory hitmap = wordle.getHiddenWord();
+    //     StructTypes.CharState[] memory alphabet = wordle.getAlphabet();
+    //     uint256 oIdx = StringUtils.findIndex(alphabet, "o");
+    //     uint256 vIdx = StringUtils.findIndex(alphabet, "v");
+    //     assertEq(hitmap[0].state, 0);
+    //     assertEq(hitmap[1].state, 1);
+    //     assertEq(hitmap[4].state, 1);
+    //     assertEq(alphabet[oIdx].state, 1);
+    //     assertEq(alphabet[vIdx].state, 3);
+
+    //     // test correct guess
+    //     assertTrue(wordle.tryGuess("BONGO"));
+    // }
 }
