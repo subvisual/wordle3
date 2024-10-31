@@ -10,15 +10,16 @@ contract WordleTest is Test {
     using StringUtils for string;
 
     Wordle wordle;
+    address tokenAddress = address(0x1);
 
     function setUp() public {
-        wordle = new Wordle("BONGO");
+        wordle = new Wordle("BONGO", tokenAddress);
     }
 
     // test word hiding
     function test_hideWord() public {
         // correct input
-        wordle = new Wordle("BINGO");
+        wordle = new Wordle("BINGO", tokenAddress);
 
         // test if hitmap is generated correctly
         StructTypes.CharState[] memory hitmap = wordle.getHiddenWord();
@@ -37,18 +38,18 @@ contract WordleTest is Test {
 
         // non-ascii input
         vm.expectRevert("Non-ASCII strings are not supported.");
-        wordle = new Wordle(unicode"👋");
+        wordle = new Wordle(unicode"👋", tokenAddress);
 
         // wrong size
         vm.expectRevert("Word must be 5 characters long.");
-        wordle = new Wordle("Banana");
+        wordle = new Wordle("Banana", tokenAddress);
         vm.expectRevert("Word must be 5 characters long.");
-        wordle = new Wordle("Bun");
+        wordle = new Wordle("Bun", tokenAddress);
     }
 
     // test alphabet initialization
     function test_alphabet() public {
-        wordle = new Wordle("HELLO");
+        wordle = new Wordle("HELLO", tokenAddress);
         StructTypes.CharState[] memory alphabet = wordle.getAlphabet();
         assertEq(alphabet[0].char, "a");
         assertEq(alphabet[1].char, "b");
@@ -84,7 +85,7 @@ contract WordleTest is Test {
 
     // test guess mechanic
     function test_tryGuess() public {
-        wordle = new Wordle("BONGO");
+        wordle = new Wordle("BONGO", tokenAddress);
 
         // test wrong guess
         assertFalse(wordle.tryGuess("olive"));

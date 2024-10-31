@@ -4,6 +4,7 @@ pragma solidity ^0.8.28;
 import {StringUtils} from "./StringUtils.sol";
 import {StructTypes} from "./Interfaces.sol";
 import {console} from "forge-std/console.sol";
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 contract Wordle {
     using StringUtils for string;
@@ -13,13 +14,16 @@ contract Wordle {
     event CorrectGuess(string guess, string message);
     event RemainingAttempts(uint256 attemptsLeft, string message);
 
+    // interfaces
+    IERC20 public token;
+
     // declare hidden word variable
     string public HIDDEN_WORD;
     StructTypes.CharState[] public HIDDEN_WORD_HITMAP;
     StructTypes.CharState[] public ALPHABET;
     uint256 public ATTEMPTS;
 
-    constructor(string memory word) {
+    constructor(string memory word, address tokenAddress) {
         if (!word.isASCII()) {
             revert("Non-ASCII strings are not supported.");
         }
@@ -27,7 +31,7 @@ contract Wordle {
         if (bytes(word).length != 5) {
             revert("Word must be 5 characters long.");
         }
-
+        token = IERC20(tokenAddress);
         HIDDEN_WORD = word;
         HIDDEN_WORD_HITMAP = StringUtils.generateHitmap(word);
         ALPHABET = StringUtils.generateHitmap("abcdefghijklmnopqrstuvwxyz");
