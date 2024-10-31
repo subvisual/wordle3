@@ -54,6 +54,7 @@ contract Wordle {
 
     // Initialize player data
     ATTEMPTS[player] = 6; // Setting the initial number of attempts
+    HIDDEN_WORD_HITMAP[player] = StringUtils.generateHitmap(HIDDEN_WORD);
 }
 
 
