@@ -7,23 +7,34 @@ import {console} from "forge-std/console.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 contract Wordle {
+    // libraries
     using StringUtils for string;
+
+    // ERC20 token interface
+    IERC20 public token;
 
     // events
     event NoMoreAttempts(string message);
     event CorrectGuess(string guess, string message);
     event RemainingAttempts(uint256 attemptsLeft, string message);
 
-    // interfaces
-    IERC20 public token;
+    // player-related mappings
     mapping(address => bool) public usedFaucet;
     mapping(address => uint256) public lastAttemptTime;
-
-    // declare hidden word variable
-    string public HIDDEN_WORD;
     mapping(address => StructTypes.CharState[]) public HIDDEN_WORD_HITMAP;
     mapping(address => StructTypes.CharState[]) public ALPHABET;
     mapping(address => uint256) public ATTEMPTS;
+
+    // declare hidden word variable
+    string public HIDDEN_WORD;
+
+    // declare the owner
+    address owner;
+
+    modifier onlyOwner() {
+        require(msg.sender == owner, "Only the owner can call this function.");
+        _;
+    }
 
     constructor(string memory word, address tokenAddress) {
         if (!word.isASCII()) {
@@ -34,6 +45,12 @@ contract Wordle {
             revert("Word must be 5 characters long.");
         }
         token = IERC20(tokenAddress);
+        owner = msg.sender;
+        HIDDEN_WORD = word;
+    }
+
+    // method to hide a new word if needed
+    function changeWord(string memory word) public onlyOwner {
         HIDDEN_WORD = word;
     }
 
