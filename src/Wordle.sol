@@ -66,6 +66,11 @@ contract Wordle {
             return false;
         }
 
+        if (StringUtils.areEqual(guess, HIDDEN_WORD)) {
+            emit CorrectGuess(guess, "Well done!");
+            return true;
+        }
+
         emit RemainingAttempts(ATTEMPTS, "Attempts left.");
         ATTEMPTS--;
 
@@ -113,11 +118,12 @@ contract Wordle {
 
         // Check for the winning condition after processing all characters.
         // emits a message if the player wins
-        if (StringUtils.isHitmapComplete(HIDDEN_WORD_HITMAP)) {
-            emit CorrectGuess(guess, "Well done!");
-            return true;
-        } else {
+        if (!StringUtils.isHitmapComplete(HIDDEN_WORD_HITMAP)) {
+            emit RemainingAttempts(ATTEMPTS, "Attempts left.");
             return false;
         }
+
+        emit CorrectGuess(guess, "Well done!");
+        return true;
     }
 }
