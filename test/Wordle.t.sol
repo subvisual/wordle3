@@ -31,6 +31,15 @@ contract WordleTest is Test {
         token.approve(address(wordle), 20 * 10 ** 18);
     }
 
+    // test if word mutation is correctl implemented
+    function test_changeWord() public {
+        wordle.changeWord("BONKS");
+
+        vm.prank(player1);
+        vm.expectRevert();
+        wordle.changeWord("BINKS");
+    }
+
     // test if player balance checking through can play
     function test_canPlay() public {
         assertTrue(wordle.canPlay(player1));
