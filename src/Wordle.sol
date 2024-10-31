@@ -31,7 +31,7 @@ contract Wordle {
         HIDDEN_WORD = word;
         HIDDEN_WORD_HITMAP = StringUtils.generateHitmap(word);
         ALPHABET = StringUtils.generateHitmap("abcdefghijklmnopqrstuvwxyz");
-        ATTEMPTS = 1;
+        ATTEMPTS = 6;
     }
 
     // get methods
@@ -57,7 +57,23 @@ contract Wordle {
             revert("Non-ASCII strings are not supported.");
         }
 
-        ATTEMPTS++;
+        if (bytes(guess).length != 5) {
+            revert("Word must be 5 characters long.");
+        }
+
+        if (ATTEMPTS == 0) {
+            emit NoMoreAttempts("You have no more attempts left.");
+            return false;
+        }
+
+        if (StringUtils.areEqual(guess, HIDDEN_WORD)) {
+            emit CorrectGuess(guess, "Well done!");
+            return true;
+        }
+
+        emit RemainingAttempts(ATTEMPTS, "Attempts left.");
+        ATTEMPTS--;
+
         StructTypes.CharState[] memory guessHitmap = StringUtils.generateHitmap(guess);
 
         // Check if the guess matches the hidden word immediately.
@@ -101,30 +117,13 @@ contract Wordle {
         }
 
         // Check for the winning condition after processing all characters.
-        return StringUtils.isHitmapComplete(HIDDEN_WORD_HITMAP);
-    }
-
-    /*
-    Main game function that checks if attempts are exhausted 
-    and processes the user's guess accordingly.
-    New attempts are managed within tryGuess().
-    */
-    function handleAttempt(string calldata guess) public returns (bool) {
-        // using 1-index for clarity
-        if (ATTEMPTS >= 7) {
-            emit NoMoreAttempts("No more attempts remaining.");
-            return false; // Game over
+        // emits a message if the player wins
+        if (!StringUtils.isHitmapComplete(HIDDEN_WORD_HITMAP)) {
+            emit RemainingAttempts(ATTEMPTS, "Attempts left.");
+            return false;
         }
 
-        // Perform a new attempt
-        bool newAttempt = tryGuess(guess);
-
-        if (newAttempt) {
-            emit CorrectGuess(guess, "Well done!");
-            return true; // Correct guess
-        } else {
-            emit RemainingAttempts(7 - ATTEMPTS, "Attempts left."); // Clear message
-            return false; // Incorrect guess
-        }
+        emit CorrectGuess(guess, "Well done!");
+        return true;
     }
 }

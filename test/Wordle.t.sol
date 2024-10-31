@@ -89,9 +89,9 @@ contract WordleTest is Test {
         // test wrong guess
         assertFalse(wordle.tryGuess("olive"));
 
-        // test attempt increment
+        // test attempt spending
         uint256 attempts = wordle.getAttempts();
-        assertEq(attempts, 2);
+        assertEq(attempts, 5);
 
         // test hitmap updates
         StructTypes.CharState[] memory hitmap = wordle.getHiddenWord();
@@ -106,22 +106,5 @@ contract WordleTest is Test {
 
         // test correct guess
         assertTrue(wordle.tryGuess("BONGO"));
-    }
-
-    // test attempt handling
-    function test_handleAttempt() public {
-        wordle = new Wordle("BINGO");
-        StructTypes.CharState[] memory hitmap = wordle.getHiddenWord();
-
-        // test if attempts and messages are emited correctly
-        assertFalse(wordle.handleAttempt("olive"));
-
-        // test attempt limit reached
-        assertFalse(wordle.handleAttempt("oliva"));
-        assertFalse(wordle.handleAttempt("super"));
-        assertFalse(wordle.handleAttempt("alive"));
-        assertFalse(wordle.handleAttempt("bongo"));
-        assertFalse(wordle.handleAttempt("pengu"));
-        assertFalse(wordle.handleAttempt("bingo"));
     }
 }
