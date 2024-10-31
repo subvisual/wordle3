@@ -54,14 +54,30 @@ contract Wordle {
         HIDDEN_WORD = word;
     }
 
-    // player and attempt-related functions
+    // token faucet to provide players an initial number of tokens
+    // to try out the game
+    function tokenFaucet(address player) public {
+        require(!usedFaucet[player], "You have already used the faucet.");
+        usedFaucet[player] = true;
+        token.transfer(player, 10 * 10 ** 18);
+    }
+
+    /* 
+    Player and attempt-related functions
+
+    Checks for player funds eligibility
+    */
+    function canPlay(address player) public view returns (bool) {
+        uint256 playCost = 1 * (10 ** 18);
+        uint256 balance = token.balanceOf(player);
+        return balance >= playCost;
+    }
 
     /*
     Function that initializes the player data for the game.
     Checks if the player has enough funds to play and if they haven't played today.
     If all condtions are met, the player's data is initialized.
     */
-
     function initAttempts(address player) public {
         require(canPlay(player), "You don't have enough tokens to play.");
 
@@ -88,28 +104,20 @@ contract Wordle {
         ALPHABET[player] = StringUtils.generateHitmap("abcdefghijklmnopqrstuvwxyz");
     }
 
-    function canPlay(address player) public view returns (bool) {
-        uint256 playCost = 1 * (10 ** 18);
-        uint256 balance = token.balanceOf(player);
-        return balance >= playCost;
-    }
+    /*
+    Word related functions
 
-    function tokenFaucet(address player) public {
-        require(!usedFaucet[player], "You have already used the faucet.");
-        usedFaucet[player] = true;
-        token.transfer(player, 10 * 10 ** 18);
-    }
-
-    // get methods
-    // verify if hidden word was setup correctly
+    Function that gets a player hidden word hitmap */
     function getHiddenWord(address player) public view returns (StructTypes.CharState[] memory) {
         return HIDDEN_WORD_HITMAP[player];
     }
 
+    // gets the player alphabet hitmap
     function getAlphabet(address player) public view returns (StructTypes.CharState[] memory) {
         return ALPHABET[player];
     }
 
+    // gets the number of attempts left
     function getPlayerAttempts(address player) public view returns (uint256) {
         return ATTEMPTS[player];
     }
