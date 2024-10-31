@@ -38,6 +38,12 @@ contract Wordle {
         ATTEMPTS = 6;
     }
 
+    function canPlay(address player) public view returns (bool) {
+        uint256 playCost = 1 * (10 ** 18);
+        uint256 balance = token.balanceOf(player);
+        return balance >= playCost;
+    }
+
     // get methods
     // verify if hidden word was setup correctly
     function getHiddenWord() public view returns (StructTypes.CharState[] memory) {

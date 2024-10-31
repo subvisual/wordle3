@@ -3,6 +3,7 @@ pragma solidity ^0.8.28;
 
 import {Test} from "forge-std/Test.sol";
 import {Wordle} from "../src/Wordle.sol";
+import {WDLToken} from "../src/ERC20.sol";
 import {StructTypes} from "../src/Interfaces.sol";
 import {StringUtils} from "../src/StringUtils.sol";
 
@@ -10,16 +11,26 @@ contract WordleTest is Test {
     using StringUtils for string;
 
     Wordle wordle;
-    address tokenAddress = address(0x1);
+    WDLToken token;
+    address player1 = address(0x2);
+    address player2 = address(0x3);
 
     function setUp() public {
-        wordle = new Wordle("BONGO", tokenAddress);
+        token = new WDLToken(1000);
+        wordle = new Wordle("BONGO", address(token));
+        token.transfer(player1, 20 * 10 ** 18);
+    }
+
+    // test if player balance checking through can play
+    function test_canPlay() public {
+        assertTrue(wordle.canPlay(player1));
+        assertFalse(wordle.canPlay(player2));
     }
 
     // test word hiding
     function test_hideWord() public {
         // correct input
-        wordle = new Wordle("BINGO", tokenAddress);
+        wordle = new Wordle("BINGO", address(token));
 
         // test if hitmap is generated correctly
         StructTypes.CharState[] memory hitmap = wordle.getHiddenWord();
@@ -38,18 +49,18 @@ contract WordleTest is Test {
 
         // non-ascii input
         vm.expectRevert("Non-ASCII strings are not supported.");
-        wordle = new Wordle(unicode"👋", tokenAddress);
+        wordle = new Wordle(unicode"👋", address(token));
 
         // wrong size
         vm.expectRevert("Word must be 5 characters long.");
-        wordle = new Wordle("Banana", tokenAddress);
+        wordle = new Wordle("Banana", address(token));
         vm.expectRevert("Word must be 5 characters long.");
-        wordle = new Wordle("Bun", tokenAddress);
+        wordle = new Wordle("Bun", address(token));
     }
 
     // test alphabet initialization
     function test_alphabet() public {
-        wordle = new Wordle("HELLO", tokenAddress);
+        wordle = new Wordle("HELLO", address(token));
         StructTypes.CharState[] memory alphabet = wordle.getAlphabet();
         assertEq(alphabet[0].char, "a");
         assertEq(alphabet[1].char, "b");
@@ -85,7 +96,7 @@ contract WordleTest is Test {
 
     // test guess mechanic
     function test_tryGuess() public {
-        wordle = new Wordle("BONGO", tokenAddress);
+        wordle = new Wordle("BONGO", address(token));
 
         // test wrong guess
         assertFalse(wordle.tryGuess("olive"));
