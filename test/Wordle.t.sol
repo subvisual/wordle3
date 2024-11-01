@@ -3,6 +3,7 @@ pragma solidity ^0.8.28;
 
 import {Test} from "forge-std/Test.sol";
 import {Wordle} from "../src/Wordle.sol";
+import {WDLToken} from "../src/ERC20.sol";
 import {StructTypes} from "../src/Interfaces.sol";
 import {StringUtils} from "../src/StringUtils.sol";
 
@@ -10,92 +11,134 @@ contract WordleTest is Test {
     using StringUtils for string;
 
     Wordle wordle;
+    WDLToken token;
+    address player1 = address(0x2);
+    address player2 = address(0x3);
 
     function setUp() public {
-        wordle = new Wordle("BONGO");
+        token = new WDLToken(1000);
+        wordle = new Wordle("BONGO", address(token));
+
+        // top up rewards pool and transfer some to player 1
+        token.transfer(address(wordle), 500 * 10 ** 18);
+        token.transfer(player1, 20 * 10 ** 18);
+
+        // simulate approval for both players
+        vm.prank(player1);
+        token.approve(address(wordle), 20 * 10 ** 18);
+
+        vm.prank(player2);
+        token.approve(address(wordle), 20 * 10 ** 18);
+    }
+
+    // test if word mutation is correctl implemented
+    function test_changeWord() public {
+        wordle.changeWord("BONKS");
+
+        vm.prank(player1);
+        vm.expectRevert();
+        wordle.changeWord("BINKS");
+    }
+
+    // test if player balance checking through can play
+    function test_canPlay() public {
+        assertTrue(wordle.canPlay(player1));
+        assertFalse(wordle.canPlay(player2));
+    }
+
+    function test_faucet() public {
+        assertEq(token.balanceOf(player2), 0);
+        wordle.tokenFaucet(player2);
+        assertEq(token.balanceOf(player2), 10 * 10 ** 18);
+
+        // can't use more than once
+        vm.expectRevert();
+        wordle.tokenFaucet(player2);
+    }
+
+    function test_chargePlauer() public {
+        vm.warp(60 minutes);
+
+        // test if player gets charged the correct amount
+        wordle.initAttempts(player1);
+        assertEq(token.balanceOf(player1), 19 * 10 ** 18);
+    }
+
+    function test_initAttempts() public {
+        vm.warp(60 minutes);
+
+        wordle.initAttempts(player1);
+
+        // tests if attempts were correctly initialized
+        uint256 attempts = wordle.getPlayerAttempts(player1);
+        assertEq(attempts, 6);
+
+        // throws error if player tries to play twice
+        vm.expectRevert();
+        wordle.initAttempts(player1);
+
+        // fails if player tries to play without enough tokens
+        vm.expectRevert();
+        wordle.initAttempts(player2);
+        // but works after using the faucet
+        wordle.tokenFaucet(player2);
+        wordle.initAttempts(player2);
+    }
+
+    function test_initPlayerHitmap() public {
+        vm.warp(60 minutes);
+        wordle.initAttempts(player1);
+
+        // tests if hitmap was correctly initialized
+        StructTypes.CharState[] memory hitmap = wordle.getHiddenWord(player1);
+        assertEq(hitmap[0].state, 0);
+        assertEq(hitmap[1].state, 0);
+        assertEq(hitmap[2].state, 0);
+        assertEq(hitmap[3].state, 0);
+        assertEq(hitmap[4].state, 0);
+    }
+
+    function test_initPlayerAlphabet() public {
+        vm.warp(60 minutes);
+        wordle.initAttempts(player1);
+
+        // tests if alphabet hitmap was correctly initialized
+        StructTypes.CharState[] memory hitmap = wordle.getAlphabet(player1);
+        assertEq(hitmap[0].state, 0);
+        assertEq(hitmap[13].state, 0);
+        assertEq(hitmap[25].state, 0);
     }
 
     // test word hiding
     function test_hideWord() public {
         // correct input
-        wordle = new Wordle("BINGO");
-
-        // test if hitmap is generated correctly
-        StructTypes.CharState[] memory hitmap = wordle.getHiddenWord();
-
-        // check if letters are correctly mapped
-        assertEq(hitmap[0].char, "b");
-        assertEq(hitmap[1].char, "i");
-        assertEq(hitmap[2].char, "n");
-        assertEq(hitmap[3].char, "g");
-        assertEq(hitmap[4].char, "o");
-
-        // check if states are initialized correctly
-        for (uint256 i = 0; i < hitmap.length; i++) {
-            assertEq(hitmap[i].state, 0);
-        }
-
+        wordle = new Wordle("BINGO", address(token));
         // non-ascii input
         vm.expectRevert("Non-ASCII strings are not supported.");
-        wordle = new Wordle(unicode"👋");
+        wordle = new Wordle(unicode"👋", address(token));
 
         // wrong size
         vm.expectRevert("Word must be 5 characters long.");
-        wordle = new Wordle("Banana");
+        wordle = new Wordle("Banana", address(token));
         vm.expectRevert("Word must be 5 characters long.");
-        wordle = new Wordle("Bun");
-    }
-
-    // test alphabet initialization
-    function test_alphabet() public {
-        wordle = new Wordle("HELLO");
-        StructTypes.CharState[] memory alphabet = wordle.getAlphabet();
-        assertEq(alphabet[0].char, "a");
-        assertEq(alphabet[1].char, "b");
-        assertEq(alphabet[2].char, "c");
-        assertEq(alphabet[3].char, "d");
-        assertEq(alphabet[4].char, "e");
-        assertEq(alphabet[5].char, "f");
-        assertEq(alphabet[6].char, "g");
-        assertEq(alphabet[7].char, "h");
-        assertEq(alphabet[8].char, "i");
-        assertEq(alphabet[9].char, "j");
-        assertEq(alphabet[10].char, "k");
-        assertEq(alphabet[11].char, "l");
-        assertEq(alphabet[12].char, "m");
-        assertEq(alphabet[13].char, "n");
-        assertEq(alphabet[14].char, "o");
-        assertEq(alphabet[15].char, "p");
-        assertEq(alphabet[16].char, "q");
-        assertEq(alphabet[17].char, "r");
-        assertEq(alphabet[18].char, "s");
-        assertEq(alphabet[19].char, "t");
-        assertEq(alphabet[20].char, "u");
-        assertEq(alphabet[21].char, "v");
-        assertEq(alphabet[22].char, "w");
-        assertEq(alphabet[23].char, "x");
-        assertEq(alphabet[24].char, "y");
-        assertEq(alphabet[25].char, "z");
-        // check if states are initialized correctly
-        for (uint256 i = 0; i < alphabet.length; i++) {
-            assertEq(alphabet[i].state, 0);
-        }
+        wordle = new Wordle("Bun", address(token));
     }
 
     // test guess mechanic
     function test_tryGuess() public {
-        wordle = new Wordle("BONGO");
+        vm.warp(60 minutes);
+        wordle.initAttempts(player1);
 
         // test wrong guess
-        assertFalse(wordle.tryGuess("olive"));
+        assertFalse(wordle.tryGuess("olive", player1));
 
         // test attempt spending
-        uint256 attempts = wordle.getAttempts();
+        uint256 attempts = wordle.getPlayerAttempts(player1);
         assertEq(attempts, 5);
 
         // test hitmap updates
-        StructTypes.CharState[] memory hitmap = wordle.getHiddenWord();
-        StructTypes.CharState[] memory alphabet = wordle.getAlphabet();
+        StructTypes.CharState[] memory hitmap = wordle.getHiddenWord(player1);
+        StructTypes.CharState[] memory alphabet = wordle.getAlphabet(player1);
         uint256 oIdx = StringUtils.findIndex(alphabet, "o");
         uint256 vIdx = StringUtils.findIndex(alphabet, "v");
         assertEq(hitmap[0].state, 0);
@@ -105,6 +148,6 @@ contract WordleTest is Test {
         assertEq(alphabet[vIdx].state, 3);
 
         // test correct guess
-        assertTrue(wordle.tryGuess("BONGO"));
+        assertTrue(wordle.tryGuess("BONGO", player1));
     }
 }
